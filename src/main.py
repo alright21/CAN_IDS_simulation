@@ -4,6 +4,7 @@ import can
 import logging
 from base64 import b64encode, b64decode
 import datetime
+import sys
 
 
 # Reference: https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Producer_Consumer_using_Queue.php
@@ -46,13 +47,12 @@ class CSVReader(can.io.generic.BaseIOHandler):
             second, microsecond = seconds.split('.')
 
             dt = datetime.datetime(int(year), int(month), int(day), int(hour), int(minute), int(second), int(microsecond))
-            data = [data0 , data1, data2, data3, data4, data5, data6, data7.rstrip('\n')]
+            data_temp = [data0 , data1, data2, data3, data4, data5, data6, data7.rstrip('\n')]
 
-            for i in range(len(data)):
-                if data[i] == '':
-                    data[i] = 0
-                else:
-                    data[i] = int(data[i])
+            data = []
+            for i in range(len(data_temp)):
+                if data_temp[i] != '':
+                    data.append(int(data_temp[i]))
             yield can.Message(
                 timestamp=dt.timestamp(),
                 is_remote_frame=(False),
@@ -61,6 +61,7 @@ class CSVReader(can.io.generic.BaseIOHandler):
                 arbitration_id=int(arbitration_id, base=16),
                 dlc=int(dlc),
                 data=data,
+                check=True
             )
 
         self.stop()
@@ -81,7 +82,7 @@ class ProducerThread(threading.Thread):
         #     time.sleep(1)
         i = 0
         for msg in CSVReader('/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_04_15_49_09_806427_vehicle.csv'):
-            # logging.info(str(msg) + " " + str(i))
+            logging.info(str(msg) + " " + str(i))   
             self.bus.send(msg)
             time.sleep(0.0001)
             i+=1
@@ -96,15 +97,57 @@ class ConsumerThread(threading.Thread):
         return
 
     def run(self):
+        min_tolerance = {}
+        # max_tolerance = {}
+        last_timestamp = {}
         logging.debug(self.name + " fired up")
         i = 0
-        while i < 50000:
+
+        # set up IDS with initial messages (training set)
+        while i<5000:
+            msg = self.bus.recv(60)
+            if msg is None:
+                logging.info('No message has been received')
+                sys.exit()
+            else:
+                logging.info(str(msg)+ ' ' + str(i))
+
+                # define threshold of periodicity of the message
+
+                
+
+                # the arbitration_id  has already been seen
+                if msg.arbitration_id in last_timestamp:
+                    time_frame = msg.timestamp - last_timestamp[msg.arbitration_id]
+                    if msg.arbitration_id not in min_tolerance:
+                        min_tolerance[msg.arbitration_id] = time_frame
+                        # max_tolerance[msg.arbitration_id] = time_frame
+                    else:
+                        if time_frame < min_tolerance[msg.arbitration_id]:
+                            min_tolerance[msg.arbitration_id] = time_frame
+                        # elif time_frame > max_tolerance[msg.arbitration_id]: 
+                        #     max_tolerance[msg.arbitration_id] = time_frame
+
+                last_timestamp[msg.arbitration_id] = msg.timestamp
+                # logging.info(msg.arbitration_id)
+            i+=1
+        print(min_tolerance)
+        # start IDS 
+        while True:
             msg = self.bus.recv(60)
             if msg is None:
                 logging.info('No message has been received')
             else:
-                logging.info(str(msg)+ ' ' + str(i))
-                # logging.info(msg.arbitration_id)
+                # logging.info(str(msg)+ ' ' + str(i))
+
+                
+                if msg.arbitration_id in last_timestamp and msg.arbitration_id in min_tolerance:
+                    time_frame = msg.timestamp - last_timestamp[msg.arbitration_id]
+                    if time_frame < min_tolerance[msg.arbitration_id]:
+                        logging.error("ATTACK detected: " + str(msg.arbitration_id) + " " + str(time_frame) + " " + str(min_tolerance[msg.arbitration_id]) + " " + str(time_frame - min_tolerance[msg.arbitration_id]))
+                    # else:
+                    #     logging.info("OK " + str(i))
+                    last_timestamp[msg.arbitration_id] = time_frame
             i+=1
         return
 

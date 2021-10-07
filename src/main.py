@@ -108,7 +108,8 @@ class ConsumerThread(threading.Thread):
         i = 0
 
         # set up IDS with initial messages (training set)
-        while i<5000:
+        while True:
+            # logging.info(i)
             msg = self.bus.recv(10)
             if msg is None:
                 logging.info('No message has been received')
@@ -118,19 +119,16 @@ class ConsumerThread(threading.Thread):
 
                 # define threshold of periodicity of the message
 
-                
-
                 # the arbitration_id  has already been seen
                 if msg.arbitration_id in last_timestamp:
                     time_frame = msg.timestamp - last_timestamp[msg.arbitration_id]
                     if msg.arbitration_id not in min_tolerance:
                         min_tolerance[msg.arbitration_id] = time_frame
-                        # max_tolerance[msg.arbitration_id] = time_frame
                     else:
-                        if time_frame < min_tolerance[msg.arbitration_id]:
+                        if time_frame < (min_tolerance[msg.arbitration_id]/2):
+                            logging.error("ATTACK detected: i=" + str(i) + " " + str(msg) + " " + str(time_frame) + " " + str(min_tolerance[msg.arbitration_id]/2))
+                        elif time_frame < min_tolerance[msg.arbitration_id]:
                             min_tolerance[msg.arbitration_id] = time_frame
-                        # elif time_frame > max_tolerance[msg.arbitration_id]: 
-                        #     max_tolerance[msg.arbitration_id] = time_frame
 
                 last_timestamp[msg.arbitration_id] = msg.timestamp
                 # logging.info(msg.arbitration_id)

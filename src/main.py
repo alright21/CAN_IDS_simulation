@@ -81,10 +81,14 @@ class ProducerThread(threading.Thread):
         #     self.bus.send(msg)
         #     time.sleep(1)
         i = 0
+        last_timestamp = 0.0
         for msg in CSVReader('/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_04_15_49_09_806427_vehicle.csv'):
-            logging.info(str(msg) + " " + str(i))   
+            if last_timestamp !=0.0:
+                # logging.info(str(msg.timestamp - last_timestamp))
+                time.sleep(min(2.0, msg.timestamp - last_timestamp))
+            # logging.info(str(msg) + " " + str(i) + " " + )   
             self.bus.send(msg)
-            time.sleep(0.0001)
+            last_timestamp = msg.timestamp
             i+=1
         return
 
@@ -105,12 +109,12 @@ class ConsumerThread(threading.Thread):
 
         # set up IDS with initial messages (training set)
         while i<5000:
-            msg = self.bus.recv(60)
+            msg = self.bus.recv(10)
             if msg is None:
                 logging.info('No message has been received')
                 sys.exit()
             else:
-                logging.info(str(msg)+ ' ' + str(i))
+                # logging.info(str(msg)+ ' ' + str(i))
 
                 # define threshold of periodicity of the message
 
@@ -137,6 +141,7 @@ class ConsumerThread(threading.Thread):
             msg = self.bus.recv(60)
             if msg is None:
                 logging.info('No message has been received')
+                return
             else:
                 # logging.info(str(msg)+ ' ' + str(i))
 
@@ -144,7 +149,7 @@ class ConsumerThread(threading.Thread):
                 if msg.arbitration_id in last_timestamp and msg.arbitration_id in min_tolerance:
                     time_frame = msg.timestamp - last_timestamp[msg.arbitration_id]
                     if time_frame < min_tolerance[msg.arbitration_id]:
-                        logging.error("ATTACK detected: " + str(msg.arbitration_id) + " " + str(time_frame) + " " + str(min_tolerance[msg.arbitration_id]) + " " + str(time_frame - min_tolerance[msg.arbitration_id]))
+                        logging.error("ATTACK detected: i=" + str(i))
                     # else:
                     #     logging.info("OK " + str(i))
                     last_timestamp[msg.arbitration_id] = time_frame

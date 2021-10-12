@@ -54,7 +54,6 @@ class CSVReader(can.io.generic.BaseIOHandler):
                     data.append(int(data_temp[i]))
             yield can.Message(
                 timestamp=dt.timestamp(),
-                # timestamp=float(timestamp),
                 is_remote_frame=(True if dlc=='0' else False),
                 is_extended_id=(True),
                 is_error_frame=(False),
@@ -88,12 +87,12 @@ class ProducerThread(threading.Thread):
             i+=1
         return
 
-class ConsumerThread(threading.Thread):
-    def __init__(self, bus=None, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
-        super(ConsumerThread, self).__init__()
+class IDS_timeframe(threading.Thread):
+    def __init__(self, group=None, filename=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(IDS_timeframe, self).__init__()
         self.target = target
         self.name = name
-        self.bus = bus
+        self.filename = filename
         return
 
     def run(self):
@@ -104,10 +103,7 @@ class ConsumerThread(threading.Thread):
         logging.debug(self.name + " fired up")
         i = 0
 
-        for msg in CSVReader('/home/alright/TURKU/thesis/data/OTIDS/Fuzzy_attack_dataset1.txt'):
-        # for msg in CSVReader('/home/alright/TURKU/thesis/data/OTIDS/Attack_free_dataset1.txt'):
-        # for msg in CSVReader('/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_04_15_49_09_806427_vehicle.csv'):
-        # for msg in CSVReader('/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_07_07_54_05_363774_vehicle.csv'):
+        for msg in CSVReader(self.filename):
             if msg is None:
                 logging.info('No message has been received')
                 sys.exit()
@@ -139,23 +135,107 @@ class ConsumerThread(threading.Thread):
                 # logging.info(msg.arbitration_id)
             i+=1
 
+class IDS_transitions(threading.Thread):
+    def __init__(self, tranining_filename=None, detection_filename=None, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(IDS_transitions, self).__init__()
+        self.target = target
+        self.name = name
+        self.training_filename = tranining_filename
+        self.detection_filename = detection_filename
+        return
+
+    def run(self):
+        i = 0
+        transitions = {}
+        last_id = 0
+        anomaly_counter = 0
+        unique_id = {}
+        matrix_index = 0
+
+        for msg in CSVReader(self.training_filename):
+            # print(transitions)
+            if i == 0:
+                last_id = msg.arbitration_id
+            else:
+                if last_id not in transitions:
+                    transitions.setdefault(last_id, []).append(msg.arbitration_id)
+                else:
+                    if msg.arbitration_id not in transitions[last_id]:
+                        transitions[last_id].append(msg.arbitration_id)
+
+            last_id = msg.arbitration_id
+            # add the id if it was never seen before
+            if msg.arbitration_id not in unique_id:
+                unique_id[msg.arbitration_id] = matrix_index
+                matrix_index+=1
+            i+=1
+        # print("number of anomalies detected: " + str(anomaly_counter))
+        
+        # print(transitions)
+
+        print(unique_id)
+
+        #populate matrix
+        matrix = [[False for destination in range(len(unique_id))] for origin in range(len(unique_id))]
+
+        for origin in transitions:
+            for destination in transitions[origin]:
+                matrix[unique_id[origin]][unique_id[destination]] = True
+        
+        # print(matrix)
+
+        i = 0
+        anomaly_counter = 0
+        for msg in CSVReader(self.detection_filename):
+            
+            # if i != 0:
+            #     if last_id in transitions:
+            #         if msg.arbitration_id not in transitions[last_id]:
+            #             logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
+            #             anomaly_counter += 1
+            #     else:
+            #         logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
+            #         anomaly_counter += 1
+            if i != 0:
+                if last_id not in unique_id and msg.arbitration_id not in unique_id:
+                    # logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
+                    anomaly_counter += 1
+                else:
+                    if not matrix[unique_id[last_id]][unique_id[msg.arbitration_id]]:
+                        # logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
+                        anomaly_counter += 1
+            
+            i+=1
+            last_id = msg.arbitration_id
+        print("number of anomalies detected: " + str(anomaly_counter))
+
+        print("transitions", len(transitions))
+        print("unique id", len(unique_id))
 
 if __name__ == '__main__':
 
-    # set up socketcan bus
-    bustype = 'socketcan'
-    channel = 'vcan0'
+    filenames = [
+        '/home/alright/TURKU/thesis/data/ReCAN/alfa_romeo/raw33.csv',
+        '/home/alright/TURKU/thesis/data/ReCAN/alfa_romeo/raw11.csv',
+        '/home/alright/TURKU/thesis/data/ReCAN/alfa_romeo/raw22.csv',
+        '/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_04_15_49_09_806427_vehicle.csv',
+        '/home/alright/TURKU/thesis/data/OTIDS/Fuzzy_attack_dataset1.txt',
+        '/home/alright/TURKU/thesis/data/OTIDS/Attack_free_dataset1.txt',
+        '/home/alright/TURKU/thesis/data/CAN-Vehicle/2020_12_07_07_54_05_363774_vehicle.csv'
+    ]
     logging.debug('Bus initialization')
-    bus = can.ThreadSafeBus(channel=channel, bustype=bustype, receive_own_messages=True, bitrate=5000000)
 
-    # writer
-    CANbus = ProducerThread(name='CAN bus', bus=bus)
-    logging.debug('Bus initialized')
-
-    # reader
-    IDS = ConsumerThread(name='IDS', bus=bus)
-    logging.debug('IDS initialized')
+    ids_timeframe = IDS_timeframe(
+        name='ids_timeframe', 
+        
+        filename=filenames[0])
+    logging.debug(ids_timeframe.name + ' initialized')
 
     # start threads
-    IDS.start()
+    ids_timeframe.start()
+    ids_transitions = IDS_transitions(
+        name='ids_transitions', 
+        tranining_filename=filenames[1], 
+        detection_filename=filenames[2])
+    ids_transitions.start()
     # CANbus.start()

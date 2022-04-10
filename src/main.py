@@ -5,6 +5,7 @@ import logging
 from base64 import b64encode, b64decode
 import datetime
 import sys
+import numpy as np
 
 
 # Reference: https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Producer_Consumer_using_Queue.php
@@ -142,6 +143,7 @@ class IDS_transitions(threading.Thread):
         self.name = name
         self.training_filename = tranining_filename
         self.detection_filename = detection_filename
+        self.MAX_SIZE = 100
         return
 
     def run(self):
@@ -151,23 +153,35 @@ class IDS_transitions(threading.Thread):
         anomaly_counter = 0
         unique_id = {}
         matrix_index = 0
+        # TODO if src or dst not in dictionary, update dictionary. then populate the matrix (with fixed length chosen at the beginning)
 
+        matrix = np.zeros((self.MAX_SIZE, self.MAX_SIZE))
         for msg in CSVReader(self.training_filename):
+
+            if i != 0:
+                if last_id not in unique_id:
+                    unique_id[last_id] = matrix_index
+                    matrix_index+=1
+                if msg.arbitration_id not in unique_id:
+                    unique_id[msg.arbitration_id] = matrix_index
+                    matrix_index+=1
+                
+                matrix[unique_id[last_id]][unique_id[msg.arbitration_id]] = 1
             # print(transitions)
-            if i == 0:
-                last_id = msg.arbitration_id
-            else:
-                if last_id not in transitions:
-                    transitions.setdefault(last_id, []).append(msg.arbitration_id)
-                else:
-                    if msg.arbitration_id not in transitions[last_id]:
-                        transitions[last_id].append(msg.arbitration_id)
+            # if i == 0:
+            #     last_id = msg.arbitration_id
+            # else:
+            #     if last_id not in transitions:
+            #         transitions.setdefault(last_id, []).append(msg.arbitration_id)
+            #     else:
+            #         if msg.arbitration_id not in transitions[last_id]:
+            #             transitions[last_id].append(msg.arbitration_id)
 
             last_id = msg.arbitration_id
             # add the id if it was never seen before
-            if msg.arbitration_id not in unique_id:
-                unique_id[msg.arbitration_id] = matrix_index
-                matrix_index+=1
+            # if msg.arbitration_id not in unique_id:
+            #     unique_id[msg.arbitration_id] = matrix_index
+            #     matrix_index+=1
             i+=1
         # print("number of anomalies detected: " + str(anomaly_counter))
         
@@ -176,11 +190,12 @@ class IDS_transitions(threading.Thread):
         print(unique_id)
 
         #populate matrix
-        matrix = [[False for destination in range(len(unique_id))] for origin in range(len(unique_id))]
+        # matrix = [[False for destination in range(len(unique_id))] for origin in range(len(unique_id))]
+        # matrix = np.zeros((len(unique_id), len(unique_id)))
 
         for origin in transitions:
             for destination in transitions[origin]:
-                matrix[unique_id[origin]][unique_id[destination]] = True
+                matrix[unique_id[origin]][unique_id[destination]] = 1
         
         # print(matrix)
 
@@ -201,6 +216,8 @@ class IDS_transitions(threading.Thread):
                     # logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
                     anomaly_counter += 1
                 else:
+                    r = unique_id[last_id]
+                    c = unique_id[msg.arbitration_id]
                     if not matrix[unique_id[last_id]][unique_id[msg.arbitration_id]]:
                         # logging.info("ANOMALY detected in transition: " + str(last_id) + " -> " + str(msg.arbitration_id))
                         anomaly_counter += 1
@@ -228,14 +245,14 @@ if __name__ == '__main__':
     ids_timeframe = IDS_timeframe(
         name='ids_timeframe', 
         
-        filename=filenames[0])
+        filename=filenames[3])
     logging.debug(ids_timeframe.name + ' initialized')
 
     # start threads
     ids_timeframe.start()
     ids_transitions = IDS_transitions(
         name='ids_transitions', 
-        tranining_filename=filenames[1], 
-        detection_filename=filenames[2])
+        tranining_filename=filenames[3], 
+        detection_filename=filenames[6])
     ids_transitions.start()
     # CANbus.start()

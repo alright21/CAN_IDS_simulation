@@ -18,7 +18,7 @@ import utils
 # Reference: https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Producer_Consumer_using_Queue.php
 logging.basicConfig(level=logging.INFO, format='(%(threadName)-9s) %(message)s',)
 
-event_related = {0x18ECFF7F:True,0x18EBFF7F:True,0x18ECFFE6:True, 0x18EBFFE6:True}
+event_related = {0x18ECFF7F:True,0x18EBFF7F:True,0x18ECFFE6:True, 0x18EBFFE6:True, 0x18FEAEE6:True}
 
 # bus details
 QUEUE_SIZE=10000
@@ -135,7 +135,7 @@ class IDSFrequency:
                             else:
                                 if time_frame < (self.min_tolerance[msg.arbitration_id]/2):
                                     logging.debug("ERROR detected: " + str(msg) + " " + str(time_frame) + " " + str(self.min_tolerance[msg.arbitration_id]/2))
-                                elif time_frame < self.min_tolerance[msg.arbitration_id]:
+                                elif time_frame < self.min_tolerance[msg.arbitration_id] and time_frame >= 0.001:
                                     self.min_tolerance[msg.arbitration_id] = time_frame
 
                     self.last_timestamp[msg.arbitration_id] = msg.timestamp
@@ -160,7 +160,7 @@ class IDSFrequency:
                             if time_frame < (self.min_tolerance[msg.arbitration_id]/2):
                                 self.detected_attacks.add(i)
                                 # logging.error("ATTACK detected: i=" + str(i) + " " + str(msg) + " " + str(time_frame) + " " + str(min_tolerance[msg.arbitration_id]/2))
-                            elif time_frame < self.min_tolerance[msg.arbitration_id]:
+                            elif time_frame < self.min_tolerance[msg.arbitration_id] and time_frame >= 0.001:
                                 self.min_tolerance[msg.arbitration_id] = time_frame
 
                         self.last_timestamp[msg.arbitration_id] = msg.timestamp
@@ -375,7 +375,6 @@ class IDSHamming:
 if __name__ == '__main__':
 
     training_filenames = [
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_10_04_728057_vehicle_normalized.csv',
 '/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_11_03_600554_vehicle_normalized.csv',
 '/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_12_02_778615_vehicle_normalized.csv',
 '/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_13_01_995553_vehicle_normalized.csv',
@@ -440,8 +439,9 @@ if __name__ == '__main__':
         ]
 
 
-    # attack_types = ['dos_0.5_randlist','dos_0.1_randlist','dos_0.01_randlist','dos_0.001_randlist']
-    attack_types = ['replay_0.5','replay_1.0','replay_5.0','replay_10.0']
+    attack_types = ['dos_0.5_randlist','dos_0.1_randlist','dos_0.01_randlist','dos_0.001_randlist']
+    # attack_types = ['replay_5.0','replay_10.0','replay_30.0','replay_50.0']
+    # attack_types = ['replaysingle_0.1','replaysingle_0.01','replaysingle_0.001','replaysingle_0.0001']
     for attack_type in attack_types:
         testing_filenames = ['/home/alright/TURKU/thesis/data/Alberto_CAN-V_data/attacks/2021_06_22_14_11_21_675720_vehicle_' + attack_type + '.csv']
 
@@ -453,22 +453,22 @@ if __name__ == '__main__':
 
         # IDS Frequency
 
-        # idsFrequency = IDSFrequency(name='IDSFrequency', verifier=verifier_filename, attack_type=attack_type)
-        # canBus.filenames = training_filenames
-        # logging.info('Starting training')
-        # busHandle = canBus.enqueue()
-        # trainingHandle = idsFrequency.train()
-        # logging.info('waiting for thread to complete')
-        # busHandle.join()
-        # trainingHandle.join()
+        idsFrequency = IDSFrequency(name='IDSFrequency', verifier=verifier_filename, attack_type=attack_type)
+        canBus.filenames = training_filenames
+        logging.info('Starting training')
+        busHandle = canBus.enqueue()
+        trainingHandle = idsFrequency.train()
+        logging.info('waiting for thread to complete')
+        busHandle.join()
+        trainingHandle.join()
 
-        # canBus.filenames = testing_filenames
-        # canBus.realTime = True
-        # logging.info('Starting test')
-        # busHandle = canBus.enqueue()
-        # testingHandle = idsFrequency.test()
-        # busHandle.join()
-        # testingHandle.join()
+        canBus.filenames = testing_filenames
+        canBus.realTime = True
+        logging.info('Starting test')
+        busHandle = canBus.enqueue()
+        testingHandle = idsFrequency.test()
+        busHandle.join()
+        testingHandle.join()
 
 
         #IDS Transitions
@@ -491,22 +491,22 @@ if __name__ == '__main__':
 
         #IDS Hamming
 
-        idsHamming = IDSHamming( name='IDSHamming', verifier=verifier_filename, attack_type=attack_type)
-        canBus.filenames = training_filenames
-        canBus.realTime = False
-        busHandle = canBus.enqueue()
-        trainingHandle = idsHamming.train()
-        logging.info('Starting training')
-        busHandle.join()
-        trainingHandle.join()
+        # idsHamming = IDSHamming( name='IDSHamming', verifier=verifier_filename, attack_type=attack_type)
+        # canBus.filenames = training_filenames
+        # canBus.realTime = False
+        # busHandle = canBus.enqueue()
+        # trainingHandle = idsHamming.train()
+        # logging.info('Starting training')
+        # busHandle.join()
+        # trainingHandle.join()
 
-        canBus.filenames = testing_filenames
-        canBus.realTime = True
-        logging.info('Starting test')
-        busHandle = canBus.enqueue()
-        testingHandle = idsHamming.test()
-        busHandle.join()
-        testingHandle.join()
+        # canBus.filenames = testing_filenames
+        # canBus.realTime = True
+        # logging.info('Starting test')
+        # busHandle = canBus.enqueue()
+        # testingHandle = idsHamming.test()
+        # busHandle.join()
+        # testingHandle.join()
 
 
 

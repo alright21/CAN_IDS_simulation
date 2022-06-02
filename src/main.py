@@ -180,6 +180,10 @@ class IDSFrequency:
                     logging.info("Exception occurred: " + str(e))
 
 
+###################################
+# IDS based on packet transitions #
+###################################
+
 class IDSTransitions:
     def __init__(self, name=None, verifier=None, attack_type=None):
         self.name = name
@@ -267,6 +271,10 @@ class IDSTransitions:
                 else:
                     logging.info('Unknown exception')
 
+
+########################################
+# IDS based on packet hamming distance #
+########################################
 
 class IDSHamming:
     def __init__(self, name=None, verifier=None, attack_type=None):
@@ -374,69 +382,7 @@ class IDSHamming:
 
 if __name__ == '__main__':
 
-    training_filenames = [
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_11_03_600554_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_12_02_778615_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_13_01_995553_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_14_01_213477_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_15_00_431179_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_15_59_634608_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_16_58_828128_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_17_58_001905_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_18_57_198424_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_19_56_400136_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_20_55_602416_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_21_54_811286_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_22_53_887541_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_23_53_085124_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_24_52_442638_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_25_51_772838_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_26_51_068837_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_27_50_340133_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_28_49_583673_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_29_48_854743_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_30_48_122172_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_31_47_396052_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_32_46_668090_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_33_45_860518_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_34_45_136631_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_35_44_916969_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_36_44_743770_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_37_44_122987_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_38_43_301819_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_39_42_558894_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_40_41_813371_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_41_41_075228_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_42_40_314591_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_43_39_531373_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_44_38_749345_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_45_37_974657_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_46_37_181616_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_47_36_409704_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_48_35_630889_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_49_34_833695_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_50_33_964979_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_51_32_864148_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_52_32_392879_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_53_31_499819_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_54_30_643057_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_55_29_829240_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_56_29_051575_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_57_28_450536_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_58_28_044336_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_13_59_27_574745_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_00_27_012099_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_01_26_539580_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_02_26_180494_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_03_25_575464_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_04_25_057171_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_05_24_619667_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_06_23_979033_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_07_23_539428_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_08_23_007943_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_09_22_554866_vehicle_normalized.csv',
-'/home/alright/TURKU/thesis/ids/CAN_IDS_benchmark/src/data/can_vehicle_n/2021_06_22_14_10_22_089648_vehicle_normalized.csv',
-        ]
+    training_filenames = utils.training_filenames
 
 
     attack_types = ['dos_0.5_randlist','dos_0.1_randlist','dos_0.01_randlist','dos_0.001_randlist']
@@ -473,40 +419,40 @@ if __name__ == '__main__':
 
         #IDS Transitions
 
-        # idsTransitions = IDSTransitions(name='IDSTransitions', verifier=verifier_filename, attack_type=attack_type)
-        # canBus.filenames = training_filenames
-        # logging.info('Starting training')
-        # busHandle = canBus.enqueue()
-        # trainingHandle = idsTransitions.train()
-        # busHandle.join()
-        # trainingHandle.join()
+        idsTransitions = IDSTransitions(name='IDSTransitions', verifier=verifier_filename, attack_type=attack_type)
+        canBus.filenames = training_filenames
+        logging.info('Starting training')
+        busHandle = canBus.enqueue()
+        trainingHandle = idsTransitions.train()
+        busHandle.join()
+        trainingHandle.join()
 
-        # canBus.filenames = testing_filenames
-        # canBus.realTime = True
-        # logging.info('Starting test')
-        # busHandle = canBus.enqueue()
-        # testingHandle = idsTransitions.test()
-        # busHandle.join()
-        # testingHandle.join()
+        canBus.filenames = testing_filenames
+        canBus.realTime = True
+        logging.info('Starting test')
+        busHandle = canBus.enqueue()
+        testingHandle = idsTransitions.test()
+        busHandle.join()
+        testingHandle.join()
 
         #IDS Hamming
 
-        # idsHamming = IDSHamming( name='IDSHamming', verifier=verifier_filename, attack_type=attack_type)
-        # canBus.filenames = training_filenames
-        # canBus.realTime = False
-        # busHandle = canBus.enqueue()
-        # trainingHandle = idsHamming.train()
-        # logging.info('Starting training')
-        # busHandle.join()
-        # trainingHandle.join()
+        idsHamming = IDSHamming( name='IDSHamming', verifier=verifier_filename, attack_type=attack_type)
+        canBus.filenames = training_filenames
+        canBus.realTime = False
+        busHandle = canBus.enqueue()
+        trainingHandle = idsHamming.train()
+        logging.info('Starting training')
+        busHandle.join()
+        trainingHandle.join()
 
-        # canBus.filenames = testing_filenames
-        # canBus.realTime = True
-        # logging.info('Starting test')
-        # busHandle = canBus.enqueue()
-        # testingHandle = idsHamming.test()
-        # busHandle.join()
-        # testingHandle.join()
+        canBus.filenames = testing_filenames
+        canBus.realTime = True
+        logging.info('Starting test')
+        busHandle = canBus.enqueue()
+        testingHandle = idsHamming.test()
+        busHandle.join()
+        testingHandle.join()
 
 
 
